@@ -1,0 +1,14 @@
+﻿The player can move through to each 'room' (cell, or point) within the grid.
+Each cell should be of a 'Room' type.
+
+'The game is a 2D grid-based game world'.
+- Use BoardManager, modified, from the TicTacToe challenge.
+- BoardManager can be made of IRoom
+- IRoom must implement a smell, sight and hear method
+- 
+
+'Use different colours to display the types of text in the console window'
+- Use Write and WriteLine 'with colour' from previous challenges.
+
+
+
