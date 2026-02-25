@@ -1,4 +1,4 @@
-﻿WorldManager grid = new WorldManager(WorldSize.Small);
+﻿WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
 Player player = new Player('#');
 FountainGame game = new FountainGame(grid, player);
 game.Run();
@@ -101,7 +101,8 @@ public class WorldManager
 
     public WorldManager(WorldSize worldSize)
     {
-        Size = worldSize switch
+        _worldSize = worldSize;
+        Size = _worldSize switch
         {
             WorldSize.Small => 4,
             WorldSize.Medium => 6,
@@ -110,6 +111,40 @@ public class WorldManager
         };
 
         Grid = InitialiseGrid(worldSize, Size);
+    }
+
+    public static WorldSize SetWorldSize()
+    {
+        string? worldSizeChoice = AskPlayerForWorldSize();
+        WorldSize worldSize = worldSizeChoice.ToLower() switch
+        {
+            "small" => WorldSize.Small,
+            "medium" => WorldSize.Medium,
+            "large" => WorldSize.Large
+        };
+
+        return worldSize;
+    }
+
+    private static string AskPlayerForWorldSize()
+    {
+        string worldSizeChoice = null;
+        bool validChoice = false;
+
+        while (!validChoice)
+        {
+            Console.Write("What size world would you like to play (small, medium, large): ");
+            worldSizeChoice = Console.ReadLine().ToLower();
+
+            if (worldSizeChoice == "small" ||
+                worldSizeChoice == "medium" ||
+                worldSizeChoice == "large")
+                validChoice = true;
+            else
+                ColourConsole.WriteLineWithColour("That wasn't a valid choice.", ConsoleColor.Red);
+        }
+
+        return worldSizeChoice;
     }
 
     private IRoom[,] InitialiseGrid(WorldSize worldSize, int size)
