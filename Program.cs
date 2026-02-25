@@ -335,7 +335,7 @@ public class EnableCommand : ICommand
             fountainRoom.Message = "You hear the rushing waters from the Fountain of Objects. It has been reactivated!";
 
             game.GetWorldManager().GetRoom(0, 0).Message = 
-                "The fountain of Objects has been reactived, and you have escaped with your life!";
+                "The Fountain of Objects has been reactived, and you have escaped with your life!";
         }
     }
 }
