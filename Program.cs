@@ -21,6 +21,7 @@ public class FountainGame
     public void Run()
     {
         _worldManager.Update(_player);
+        Console.WriteLine(new string('-', 60));
         while (!_gameOver)
         {
             CheckWin();
@@ -30,6 +31,7 @@ public class FountainGame
             _commandManager.SetCommand(GetCommand());
             _commandManager.RunCommand(this);
             _worldManager.Update(_player);
+            Console.WriteLine(new string('-', 60));
             
         }
         DisplayRoundStatus();
@@ -57,7 +59,8 @@ public class FountainGame
                 "move east" => new EastCommand(),
                 "move south" => new SouthCommand(),
                 "move west" => new WestCommand(),
-                "enable fountain" => new EnableCommand(),
+                "enable fountain" => new EnableFountainCommand(),
+                "help" => new HelpCommand(),
                 _ => new DefaultCommand()
             };
 
@@ -128,7 +131,7 @@ public class WorldManager
 
     private static string AskPlayerForWorldSize()
     {
-        string worldSizeChoice = null;
+        string worldSizeChoice = null!;
         bool validChoice = false;
 
         while (!validChoice)
@@ -323,7 +326,22 @@ public interface ICommand
     void Run(FountainGame game);
 }
 
-public class EnableCommand : ICommand
+public class HelpCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        ColourConsole.WriteWithColour("move (north, east, south, west): ", ConsoleColor.Cyan);
+        Console.WriteLine("Move the player along the grid.");
+
+        ColourConsole.WriteWithColour("enable fountain: ", ConsoleColor.Cyan);
+        Console.WriteLine("Enables the Fountain of Objects.");
+        
+        Console.Write("Press any key to continue...");
+        Console.ReadLine();
+    }
+}
+
+public class EnableFountainCommand : ICommand
 {
     public void Run(FountainGame game)
     {
