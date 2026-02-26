@@ -47,7 +47,8 @@ public class FountainGame
         Console.WriteLine("You must navigate the Caverns with your other senses.");
         Console.WriteLine("Find the Fountain of Objects, enable it, and return to the entrance.");
         Console.Write("Press any key to continue...");
-        Console.ReadLine();
+        Console.ReadKey();
+        Console.Clear();
     }
 
     private void DisplayRoundStatus()
@@ -348,7 +349,7 @@ public class HelpCommand : ICommand
         Console.WriteLine("Enables the Fountain of Objects.");
 
         Console.Write("Press any key to continue...");
-        Console.ReadLine();
+        Console.ReadKey();
     }
 }
 
