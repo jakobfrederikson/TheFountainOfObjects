@@ -20,6 +20,7 @@ public class FountainGame
 
     public void Run()
     {
+        DisplayStartGameMessage();
         _worldManager.Update(_player);
         Console.WriteLine(new string('-', 60));
         while (!_gameOver)
@@ -37,6 +38,16 @@ public class FountainGame
         DisplayRoundStatus();
         if (_gameWin) Console.WriteLine("You win!");
         else Console.WriteLine("You lose.");
+    }
+
+    private void DisplayStartGameMessage()
+    {
+        Console.WriteLine("You enter the Cavern of Objects, a maze of rooms filled with dangerous pits in search of the Fountain of Objects.");
+        Console.WriteLine("Light is visible only in the entrance, and no other light is seen anywhere in the caverns.");
+        Console.WriteLine("You must navigate the Caverns with your other senses.");
+        Console.WriteLine("Find the Fountain of Objects, enable it, and return to the entrance.");
+        Console.Write("Press any key to continue...");
+        Console.ReadLine();
     }
 
     private void DisplayRoundStatus()
@@ -335,7 +346,7 @@ public class HelpCommand : ICommand
 
         ColourConsole.WriteWithColour("enable fountain: ", ConsoleColor.Cyan);
         Console.WriteLine("Enables the Fountain of Objects.");
-        
+
         Console.Write("Press any key to continue...");
         Console.ReadLine();
     }
