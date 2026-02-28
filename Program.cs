@@ -1,4 +1,5 @@
-﻿WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
+﻿FountainGame.DisplayStartGameMessage();
+WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
 Player player = new Player('#');
 FountainGame game = new FountainGame(grid, player);
 game.Run();
@@ -20,7 +21,6 @@ public class FountainGame
 
     public void Run()
     {
-        DisplayStartGameMessage();
         _worldManager.Update(_player);
         Console.WriteLine(new string('-', 60));
         while (!_gameOver)
@@ -40,7 +40,7 @@ public class FountainGame
         else Console.WriteLine("You lose.");
     }
 
-    private void DisplayStartGameMessage()
+    public static void DisplayStartGameMessage()
     {
         Console.WriteLine("You enter the Cavern of Objects, a maze of rooms filled with dangerous pits in search of the Fountain of Objects.");
         Console.WriteLine("Light is visible only in the entrance, and no other light is seen anywhere in the caverns.");
@@ -137,6 +137,8 @@ public class WorldManager
             "medium" => WorldSize.Medium,
             "large" => WorldSize.Large
         };
+
+        Console.Clear();
 
         return worldSize;
     }
@@ -316,6 +318,14 @@ public class EntranceRoom : GenericRoom
         RoomSymbol = '*';
         Color = ConsoleColor.Yellow;
         Message = "You see light coming from the cavern entrance.";
+    }
+}
+
+public class PitRoom: GenericRoom
+{
+    public PitRoom(int X, int Y) : base(X, Y)
+    {
+
     }
 }
 

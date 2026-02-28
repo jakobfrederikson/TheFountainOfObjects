@@ -12,3 +12,35 @@ Each cell should be of a 'Room' type.
 
 
 
+Current Flow:
+1. Start
+2. Get World Size
+3. Display Rules
+4. Start Game Loop
+5. Check Win
+6. Display Grid
+7. Display Player Position
+8. Display Current Room message
+9. Get Player Command
+10. Run Player Command
+11. Update World Grid
+
+If Win:
+1. Break Game Loop
+2. Display Player Position
+3. Display Win Message
+
+New Flow:
+1. Start
+2. Display Rules
+3. Get World Size
+4. Start Game Loop
+5. Check Win, Break loop if won
+6. Check Lose, Break loop if lose
+7. For any adjacent rooms, record their 'adjacent room message'
+8. Display world grid
+9. Display Current Room Message
+10. Display Adjacent Rooms Message(s)
+11. Get Player Command
+12. Run Player Command
+13. Update World Grid
