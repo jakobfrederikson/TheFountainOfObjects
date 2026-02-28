@@ -1,11 +1,12 @@
 ﻿FountainGame.DisplayStartGameMessage();
 WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
-Player player = new Player('#');
+Player player = new Player('P');
 FountainGame game = new FountainGame(grid, player);
 game.Run();
 
 public class FountainGame
 {
+    private MessageManager _messageManager;
     private CommandManager _commandManager;
     private WorldManager _worldManager;
     private Player _player;
@@ -14,6 +15,7 @@ public class FountainGame
 
     public FountainGame(WorldManager grid, Player player)
     {
+        _messageManager = new MessageManager();
         _commandManager = new CommandManager();
         _worldManager = grid;
         _player = player;
@@ -23,6 +25,7 @@ public class FountainGame
     {
         _worldManager.Update(_player);
         Console.WriteLine(new string('-', 60));
+
         while (!_gameOver)
         {
             // Run command for current room
@@ -36,11 +39,10 @@ public class FountainGame
             // Display World Grid
             _worldManager.DisplayGridState(_player.Symbol);
 
-            // Display current room message
-            DisplayRoundStatus();
-
-            // Check for any adjacent rooms, add their 'adjacent room' message to a list
-            // Display Adjacent room messages
+            // Display messages
+            SetMessages();
+            _messageManager.DisplayMessages();
+            _messageManager.ClearMessages();
 
             // Get and run player command
             _commandManager.SetCommand(GetCommand());
@@ -48,11 +50,11 @@ public class FountainGame
 
             // Update world grid
             _worldManager.Update(_player);
-
-            Console.WriteLine(new string('-', 60));
-            
         }
-        DisplayRoundStatus();
+
+        _messageManager.ClearMessages();
+        _messageManager.AddMessage(PlayerLocationMessage());
+        _messageManager.DisplayMessages();
         if (_gameWin) Console.WriteLine("You win!");
         else Console.WriteLine("You lose.");
     }
@@ -68,11 +70,26 @@ public class FountainGame
         Console.Clear();
     }
 
-    private void DisplayRoundStatus()
+    private string PlayerLocationMessage() => 
+        $"You are in the room at (Row={_player.X}, Column={_player.Y}).";
+
+    private void SetMessages()
     {
-        Console.WriteLine($"You are in the room at (Row={_player.X}, Column={_player.Y}).");
+        // Player location
+        _messageManager.AddMessage(PlayerLocationMessage());
+
+        // Current room message
         IRoom currentRoom = _worldManager.GetRoom(_player.X, _player.Y);
-        if (currentRoom.InRoomMessage != null) Console.WriteLine(currentRoom.InRoomMessage);
+        if (currentRoom.InRoomMessage != null)
+            _messageManager.AddMessage(currentRoom.InRoomMessage);
+
+        // Any adjacent room messages
+        List<IRoom> adjacentRooms = _worldManager.GetAdjacentRooms(_player);
+        foreach (IRoom room in adjacentRooms)
+            if (room.AdjacentMessage != null) _messageManager.AddMessage(room.AdjacentMessage);
+
+        // Turn divider
+        _messageManager.AddMessage(new string('-', 60));
     }
 
     private ICommand GetCommand()
@@ -123,6 +140,22 @@ public class FountainGame
     public Player GetPlayer() => _player;
     public WorldManager GetWorldManager() => _worldManager;
     public int GetWorldSize() => _worldManager.Size;
+}
+
+// Handles messages related to the game - e.g. current player location and any room messages.
+public class MessageManager
+{
+    private List<(string text, ConsoleColor colour)> Messages { get; set; } 
+        = new List<(string text, ConsoleColor colour)>();
+
+    public void AddMessage(string text, ConsoleColor colour = ConsoleColor.White) => Messages.Add((text, colour));
+    public void DisplayMessages()
+    {
+        foreach (var message in Messages)
+            ColourConsole.WriteLineWithColour(message.text, message.colour);
+    }
+
+    public void ClearMessages() => Messages.Clear();
 }
 
 // ==================================================================
@@ -224,6 +257,33 @@ public class WorldManager
     public IRoom GetRoom(int x, int y) => Grid[x, y];
     public IRoom GetCurrentRoom() => _currentRoom;
 
+    public List<IRoom> GetAdjacentRooms(Player player)
+    {
+        List<IRoom> adjacentRooms = new List<IRoom>();
+
+        int x = player.X;
+        int y = player.Y;
+
+        if (IsValidRoom(x + 1, y)) adjacentRooms.Add(Grid[player.X + 1, player.Y]);
+        if (IsValidRoom(x - 1, y)) adjacentRooms.Add(Grid[player.X - 1, player.Y]);
+        if (IsValidRoom(x, y + 1)) adjacentRooms.Add(Grid[player.X, player.Y + 1]);
+        if (IsValidRoom(x, y - 1)) adjacentRooms.Add(Grid[player.X, player.Y - 1]);
+        if (IsValidRoom(x + 1, y + 1)) adjacentRooms.Add(Grid[player.X + 1, player.Y + 1]);
+        if (IsValidRoom(x + 1, y - 1)) adjacentRooms.Add(Grid[player.X + 1, player.Y - 1]);
+        if (IsValidRoom(x - 1, y - 1)) adjacentRooms.Add(Grid[player.X - 1, player.Y - 1]);
+        if (IsValidRoom(x - 1, y + 1)) adjacentRooms.Add(Grid[player.X - 1, player.Y + 1]);
+
+        return adjacentRooms;
+    }
+
+    private bool IsValidRoom(int x, int y)
+    {
+        if (x < 0 || x >= Size) return false;
+        if (y < 0 || y >= Size) return false;
+
+        return true;
+    }
+
     // Displays the current board state.
     public void DisplayGridState(char playerSymbol)
     {
@@ -300,7 +360,8 @@ public interface IRoom
     public bool Discovered { get; set; }
     public char RoomSymbol { get; set; }
     public ConsoleColor Color { get; set; }
-    public string InRoomMessage { get; set; }
+    public string? InRoomMessage { get; set; }
+    public string? AdjacentMessage { get; set; }
     public ICommand? Command { get; init; }
 }
 
@@ -352,8 +413,6 @@ public class EntranceRoom : GenericRoom
 
 public class PitRoom : GenericRoom
 {
-    ICommand? Command { get; init; }
-
     public PitRoom(int X, int Y) : base(X, Y)
     {
         Command = new PitCommand();
