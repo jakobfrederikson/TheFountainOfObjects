@@ -25,13 +25,30 @@ public class FountainGame
         Console.WriteLine(new string('-', 60));
         while (!_gameOver)
         {
-            CheckWin();
-            if (_gameOver) break;
+            // Run command for current room
+            _commandManager.SetCommand(_worldManager.GetCurrentRoom().Command);
+            _commandManager.RunCommand(this);
+
+            // Check Win/Lose
+            if (CheckWin()) break;
+            if (CheckLose()) break;
+
+            // Display World Grid
             _worldManager.DisplayGridState(_player.Symbol);
+
+            // Display current room message
             DisplayRoundStatus();
+
+            // Check for any adjacent rooms, add their 'adjacent room' message to a list
+            // Display Adjacent room messages
+
+            // Get and run player command
             _commandManager.SetCommand(GetCommand());
             _commandManager.RunCommand(this);
+
+            // Update world grid
             _worldManager.Update(_player);
+
             Console.WriteLine(new string('-', 60));
             
         }
@@ -55,7 +72,7 @@ public class FountainGame
     {
         Console.WriteLine($"You are in the room at (Row={_player.X}, Column={_player.Y}).");
         IRoom currentRoom = _worldManager.GetRoom(_player.X, _player.Y);
-        if (currentRoom.Message != null) Console.WriteLine(currentRoom.Message);
+        if (currentRoom.InRoomMessage != null) Console.WriteLine(currentRoom.InRoomMessage);
     }
 
     private ICommand GetCommand()
@@ -90,15 +107,18 @@ public class FountainGame
         return text;
     }
 
-    private void CheckWin()
+    private bool CheckWin()
     {
-        FountainOfObjectsRoom fountainRoom = (FountainOfObjectsRoom)_worldManager.GetFountainRoom();
+        FountainOfObjectsRoom fountainRoom = 
+            (FountainOfObjectsRoom)_worldManager.GetFountainRoom();
+
         if (fountainRoom.Enabled && _player.X == 0 && _player.Y == 0)
-        {
-            _gameOver = true;
-            _gameWin = true;
-        }
+            return true;
+
+        return false;
     }
+
+    private bool CheckLose() => _player.Alive ? false : true;
 
     public Player GetPlayer() => _player;
     public WorldManager GetWorldManager() => _worldManager;
@@ -110,8 +130,10 @@ public class FountainGame
 // ==================================================================
 public class WorldManager
 {
-    public int Size { get; init; }
     private WorldSize _worldSize;
+    private IRoom _currentRoom;
+
+    public int Size { get; init; }
     public IRoom[,] Grid { get; private set; }
 
     public WorldManager(WorldSize worldSize)
@@ -124,8 +146,8 @@ public class WorldManager
             WorldSize.Large => 8,
             _ => 4
         };
-
         Grid = InitialiseGrid(worldSize, Size);
+        _currentRoom = Grid[0, 0];
     }
 
     public static WorldSize SetWorldSize()
@@ -200,6 +222,7 @@ public class WorldManager
     }
 
     public IRoom GetRoom(int x, int y) => Grid[x, y];
+    public IRoom GetCurrentRoom() => _currentRoom;
 
     // Displays the current board state.
     public void DisplayGridState(char playerSymbol)
@@ -256,8 +279,9 @@ public class WorldManager
         }
 
         Grid[player.X, player.Y].PlayerInRoom = true;
+        _currentRoom = Grid[player.X, player.Y];
 
-        if (!Grid[player.X, player.Y].Discovered) Grid[player.X, player.Y].Discovered = true;
+        if (!_currentRoom.Discovered) _currentRoom.Discovered = true;
     }
 
     public void ResetBoard()
@@ -276,7 +300,8 @@ public interface IRoom
     public bool Discovered { get; set; }
     public char RoomSymbol { get; set; }
     public ConsoleColor Color { get; set; }
-    public string Message { get; set; }
+    public string InRoomMessage { get; set; }
+    public ICommand? Command { get; init; }
 }
 
 public class GenericRoom : IRoom
@@ -287,7 +312,9 @@ public class GenericRoom : IRoom
     public bool Discovered { get; set; }
     public char RoomSymbol { get; set; }
     public ConsoleColor Color { get; set; }
-    public string? Message { get; set; }
+    public string? InRoomMessage { get; set; }
+    public string? AdjacentMessage { get; set; }
+    public ICommand? Command { get; init; }
 
     public GenericRoom(int x, int y)
     {
@@ -295,7 +322,9 @@ public class GenericRoom : IRoom
         Y = y;
         RoomSymbol = ' ';
         Color = ConsoleColor.White;
-        Message = null;
+        InRoomMessage = null;
+        AdjacentMessage = null;
+        Command = null;
     }
 }
 
@@ -307,7 +336,7 @@ public class FountainOfObjectsRoom : GenericRoom
     {
         RoomSymbol = '@';
         Color = ConsoleColor.Cyan;
-        Message = "You hear water dripping in this room. The Fountain of Objects is here!";
+        InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
 }
 
@@ -317,15 +346,21 @@ public class EntranceRoom : GenericRoom
     {
         RoomSymbol = '*';
         Color = ConsoleColor.Yellow;
-        Message = "You see light coming from the cavern entrance.";
+        InRoomMessage = "You see light coming from the cavern entrance.";
     }
 }
 
-public class PitRoom: GenericRoom
+public class PitRoom : GenericRoom
 {
+    ICommand? Command { get; init; }
+
     public PitRoom(int X, int Y) : base(X, Y)
     {
-
+        Command = new PitCommand();
+        RoomSymbol = '_';
+        Color = ConsoleColor.Red;
+        InRoomMessage = "You fall into a pit and die.";
+        AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
     }
 }
 
@@ -334,18 +369,34 @@ public class Player
     public int X { get; set; }
     public int Y { get; set; }
     public char Symbol { get; private set; }
+    public bool Alive { get; set; }
 
     public Player(char symbol)
     {
         X = 0;
         Y = 0;
         Symbol = symbol;
+        Alive = true;
     }
 }
 
 public interface ICommand
 {
-    void Run(FountainGame game);
+    public void Run(FountainGame game);
+}
+
+public class PitCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
+
+        if (currentRoom.GetType() != typeof(PitRoom))
+            return;
+        
+        player.Alive = false;
+    }
 }
 
 public class HelpCommand : ICommand
@@ -372,9 +423,9 @@ public class EnableFountainCommand : ICommand
         if (fountainRoom.PlayerInRoom)
         {
             fountainRoom.Enabled = true;
-            fountainRoom.Message = "You hear the rushing waters from the Fountain of Objects. It has been reactivated!";
+            fountainRoom.InRoomMessage = "You hear the rushing waters from the Fountain of Objects. It has been reactivated!";
 
-            game.GetWorldManager().GetRoom(0, 0).Message = 
+            game.GetWorldManager().GetRoom(0, 0).InRoomMessage = 
                 "The Fountain of Objects has been reactived, and you have escaped with your life!";
         }
     }
@@ -428,10 +479,11 @@ class CommandManager
 {
     private ICommand? Command;
 
-    public void SetCommand(ICommand command) => Command = command;
+    public void SetCommand(ICommand? command) => Command = command;
     public void RunCommand(FountainGame game)
     {
-        Command?.Run(game);
+        if (Command != null)
+            Command?.Run(game);
     }
 }
 
