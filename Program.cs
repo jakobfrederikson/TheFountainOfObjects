@@ -52,7 +52,6 @@ public class FountainGame
             _worldManager.Update(_player);
         }
 
-        _messageManager.ClearMessages();
         _messageManager.AddMessage(PlayerLocationMessage());
         _messageManager.DisplayMessages();
         if (_gameWin) Console.WriteLine("You win!");
@@ -130,7 +129,10 @@ public class FountainGame
             (FountainOfObjectsRoom)_worldManager.GetFountainRoom();
 
         if (fountainRoom.Enabled && _player.X == 0 && _player.Y == 0)
+        {
+            _gameWin = true;
             return true;
+        }
 
         return false;
     }
@@ -235,7 +237,8 @@ public class WorldManager
         // Entrance will always be at 0, 0
         grid[0, 0] = new EntranceRoom(0, 0);
 
-        SetFountainRoom(grid);        
+        SetFountainRoom(grid);
+        SetPitRoom(grid);
 
         return grid;
     }
@@ -245,6 +248,13 @@ public class WorldManager
         if (_worldSize == WorldSize.Small) grid[0, 2] = new FountainOfObjectsRoom(0, 2);
         else if (_worldSize == WorldSize.Medium) grid[1, 4] = new FountainOfObjectsRoom(1, 4);
         else if (_worldSize == WorldSize.Large) grid[4, 7] = new FountainOfObjectsRoom(4, 7);
+    }
+
+    private void SetPitRoom(IRoom[,] grid)
+    {
+        if (_worldSize == WorldSize.Small) grid[0, 1] = new PitRoom(0, 1);
+        else if (_worldSize == WorldSize.Medium) grid[1, 3] = new PitRoom(1, 3);
+        else if (_worldSize == WorldSize.Large) grid[4, 6] = new PitRoom(4, 6);
     }
 
     public IRoom GetFountainRoom()
