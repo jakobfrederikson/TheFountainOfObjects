@@ -52,7 +52,6 @@ public class FountainGame
             _worldManager.Update(_player);
         }
 
-        _messageManager.AddMessage(PlayerLocationMessage());
         _messageManager.DisplayMessages();
         if (_gameWin) Console.WriteLine("You win!");
         else Console.WriteLine("You lose.");
@@ -139,6 +138,7 @@ public class FountainGame
 
     private bool CheckLose() => _player.Alive ? false : true;
 
+    public MessageManager GetMessageManager() => _messageManager;
     public Player GetPlayer() => _player;
     public WorldManager GetWorldManager() => _worldManager;
     public int GetWorldSize() => _worldManager.Size;
@@ -465,6 +465,7 @@ public class PitCommand : ICommand
             return;
         
         player.Alive = false;
+        game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
     }
 }
 
