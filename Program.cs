@@ -28,12 +28,20 @@ public class FountainGame
 
         while (!_gameOver)
         {
+            // Clear old messsages
+            _messageManager.ClearMessages();
+
             // Run command for current room
             _commandManager.SetCommand(_worldManager.GetCurrentRoom().Command);
             _commandManager.RunCommand(this);
 
             // Check Win/Lose
-            if (CheckWin()) break;
+            if (CheckWin())
+            {
+                _gameWin = true;
+                break;
+            }
+            
             if (CheckLose()) break;
 
             // Display World Grid
@@ -50,11 +58,16 @@ public class FountainGame
 
             // Update world grid
             _worldManager.Update(_player);
+
+            _messageManager.AddMessage(new string('-', 60));
+            _messageManager.DisplayMessages();
         }
 
+        if (_gameWin) _messageManager.AddMessage("You Win!", ConsoleColor.Green);
+        else _messageManager.AddMessage("You Lose!", ConsoleColor.Red);
+
+        _worldManager.DisplayGridState(_player.Symbol);
         _messageManager.DisplayMessages();
-        if (_gameWin) Console.WriteLine("You win!");
-        else Console.WriteLine("You lose.");
     }
 
     public static void DisplayStartGameMessage()
@@ -85,9 +98,6 @@ public class FountainGame
         List<IRoom> adjacentRooms = _worldManager.GetAdjacentRooms(_player);
         foreach (IRoom room in adjacentRooms)
             if (room.AdjacentMessage != null) _messageManager.AddMessage(room.AdjacentMessage);
-
-        // Turn divider
-        _messageManager.AddMessage(new string('-', 60));
     }
 
     private ICommand GetCommand()
@@ -128,10 +138,7 @@ public class FountainGame
             (FountainOfObjectsRoom)_worldManager.GetFountainRoom();
 
         if (fountainRoom.Enabled && _player.X == 0 && _player.Y == 0)
-        {
-            _gameWin = true;
             return true;
-        }
 
         return false;
     }
@@ -150,7 +157,7 @@ public class MessageManager
     private List<(string text, ConsoleColor colour)> Messages { get; set; } 
         = new List<(string text, ConsoleColor colour)>();
 
-    public void AddMessage(string text, ConsoleColor colour = ConsoleColor.White) => Messages.Add((text, colour));
+    public void AddMessage(string text, ConsoleColor colour = ConsoleColor.Gray) => Messages.Add((text, colour));
     public void DisplayMessages()
     {
         foreach (var message in Messages)
