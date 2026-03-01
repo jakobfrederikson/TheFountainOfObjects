@@ -445,7 +445,7 @@ public class EntranceRoom : GenericRoom
 {
     public EntranceRoom(int row, int column) : base(row, column)
     {
-        RoomSymbol = '*';
+        RoomSymbol = 'O';
         Color = ConsoleColor.Yellow;
         InRoomMessage = "You see light coming from the cavern entrance.";
     }
@@ -458,7 +458,7 @@ public class PitRoom : GenericRoom
         Command = new PitCommand();
         RoomSymbol = '_';
         Color = ConsoleColor.Red;
-        InRoomMessage = "You fall into a pit and die.";
+        InRoomMessage = "You fell into a pit and die.";
         AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
     }
 }
@@ -472,6 +472,18 @@ public class MaelstromRoom : GenericRoom
         Color = ConsoleColor.Red;
         InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
         AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
+    }
+}
+
+public class AmarokRoom : GenericRoom
+{
+    public AmarokRoom(int row, int column) : base(row, column)
+    {
+        Command = new MaelstromCommand();
+        RoomSymbol = '!';
+        Color = ConsoleColor.Red;
+        InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
+        AdjacentMessage = "You can smell the rotten stench of an amarok in a nearby room.";
     }
 }
 
