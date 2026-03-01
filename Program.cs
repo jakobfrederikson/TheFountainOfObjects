@@ -258,10 +258,6 @@ public class WorldManager
 
         SetSpecialRooms(grid);
 
-        SetFountainRoom(grid);
-        SetPitRoom(grid);
-        SetMaelstromRoom(grid);
-
         return grid;
     }
 
@@ -496,7 +492,7 @@ public class PitRoom : GenericRoom
 {
     public PitRoom() 
     {
-        Command = new PitCommand();
+        Command = new KillCommand<PitRoom>();
         RoomSymbol = '_';
         Color = ConsoleColor.Red;
         InRoomMessage = "You fell into a pit and die.";
@@ -538,7 +534,7 @@ public class AmarokRoom : GenericRoom
 {
     public AmarokRoom() 
     {
-        Command = new MaelstromCommand();
+        Command = new KillCommand<AmarokRoom>();
         RoomSymbol = '!';
         Color = ConsoleColor.Red;
         InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
@@ -600,14 +596,15 @@ public class MaelstromCommand : ICommand
     }
 }
 
-public class PitCommand : ICommand
+public class KillCommand<T> : ICommand
+    where T : IRoom
 {
     public void Run(FountainGame game)
     {
         Player player = game.GetPlayer();
         IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
 
-        if (currentRoom.GetType() != typeof(PitRoom))
+        if (currentRoom.GetType() != typeof(T))
             return;
         
         player.Alive = false;
