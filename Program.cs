@@ -203,7 +203,7 @@ public class WorldManager
             WorldSize.Large => 8,
             _ => 4
         };
-        Grid = InitialiseGrid(worldSize, Size);
+        Grid = InitialiseGrid(Size);
         _currentRoom = Grid[0, 0];
     }
 
@@ -243,7 +243,7 @@ public class WorldManager
         return worldSizeChoice;
     }
 
-    private IRoom[,] InitialiseGrid(WorldSize worldSize, int size)
+    private IRoom[,] InitialiseGrid(int size)
     {
         IRoom[,] grid = new IRoom[size, size];
 
@@ -386,7 +386,7 @@ public class WorldManager
 
     public void ResetBoard()
     {
-        Grid = InitialiseGrid(_worldSize, Size);
+        Grid = InitialiseGrid(Size);
     }
 }
 
