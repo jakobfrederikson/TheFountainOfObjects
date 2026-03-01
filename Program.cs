@@ -72,10 +72,16 @@ public class FountainGame
 
     public static void DisplayStartGameMessage()
     {
+        ConsoleColor foregroundColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine("You enter the Cavern of Objects, a maze of rooms filled with dangerous pits in search of the Fountain of Objects.");
         Console.WriteLine("Light is visible only in the entrance, and no other light is seen anywhere in the caverns.");
         Console.WriteLine("You must navigate the Caverns with your other senses.");
         Console.WriteLine("Find the Fountain of Objects, enable it, and return to the entrance.");
+        Console.WriteLine("Look out for pits. You will feel a breeze if a pit is in an adjacent room. If you enter a room with a pit, you will die.");
+        Console.ForegroundColor = foregroundColor;
+
+        Console.WriteLine();
         Console.Write("Press any key to continue...");
         Console.ReadKey();
         Console.Clear();
@@ -92,7 +98,7 @@ public class FountainGame
         // Current room message
         IRoom currentRoom = _worldManager.GetRoom(_player.X, _player.Y);
         if (currentRoom.InRoomMessage != null)
-            _messageManager.AddMessage(currentRoom.InRoomMessage);
+            _messageManager.AddMessage(currentRoom.InRoomMessage, currentRoom.Color);
 
         // Any adjacent room messages
         List<IRoom> adjacentRooms = _worldManager.GetAdjacentRooms(_player);
@@ -107,6 +113,8 @@ public class FountainGame
         while (command == null || command.GetType() == typeof(DefaultCommand))
         {
             string? commandChoice = AskPlayerWhatToDo();
+
+            
             command = commandChoice?.ToLower() switch
             {
                 "move north" => new NorthCommand(),
@@ -128,7 +136,11 @@ public class FountainGame
     private string? AskPlayerWhatToDo()
     {
         Console.Write("What do you want to do? ");
+
+        ConsoleColor foregroundColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Cyan;
         string? text = Console.ReadLine();
+        Console.ForegroundColor = foregroundColor;
         return text;
     }
 
@@ -154,14 +166,17 @@ public class FountainGame
 // Handles messages related to the game - e.g. current player location and any room messages.
 public class MessageManager
 {
-    private List<(string text, ConsoleColor colour)> Messages { get; set; } 
-        = new List<(string text, ConsoleColor colour)>();
+    private List<(string? text, ConsoleColor colour)> Messages { get; set; } 
+        = new List<(string? text, ConsoleColor colour)>();
 
-    public void AddMessage(string text, ConsoleColor colour = ConsoleColor.Gray) => Messages.Add((text, colour));
+    public void AddMessage(string? text, ConsoleColor colour = ConsoleColor.White) => Messages.Add((text, colour));
     public void DisplayMessages()
     {
         foreach (var message in Messages)
-            ColourConsole.WriteLineWithColour(message.text, message.colour);
+        {
+            if (message.text != null)
+                ColourConsole.WriteLineWithColour(message.text, message.colour);
+        }            
     }
 
     public void ClearMessages() => Messages.Clear();
@@ -413,7 +428,7 @@ public class FountainOfObjectsRoom : GenericRoom
     public FountainOfObjectsRoom(int X, int Y) : base(X, Y) 
     {
         RoomSymbol = '@';
-        Color = ConsoleColor.Cyan;
+        Color = ConsoleColor.Blue;
         InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
 }
@@ -486,8 +501,10 @@ public class HelpCommand : ICommand
         ColourConsole.WriteWithColour("enable fountain: ", ConsoleColor.Cyan);
         Console.WriteLine("Enables the Fountain of Objects.");
 
+        Console.WriteLine();
         Console.Write("Press any key to continue...");
         Console.ReadKey();
+        Console.WriteLine();
     }
 }
 
