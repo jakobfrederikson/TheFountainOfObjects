@@ -256,8 +256,7 @@ public class WorldManager
             }
         }
 
-        // Entrance will always be at 0, 0
-        grid[0, 0] = new EntranceRoom(0, 0);
+        SetSpecialRooms(grid);
 
         SetFountainRoom(grid);
         SetPitRoom(grid);
@@ -266,32 +265,58 @@ public class WorldManager
         return grid;
     }
 
-    private void SetFountainRoom(IRoom[,] grid)
+    private void SetSpecialRooms(IRoom[,] grid)
     {
-        if (_worldSize == WorldSize.Small) grid[0, 2] = new FountainOfObjectsRoom(0, 2);
-        else if (_worldSize == WorldSize.Medium) grid[1, 4] = new FountainOfObjectsRoom(1, 4);
-        else if (_worldSize == WorldSize.Large) grid[4, 7] = new FountainOfObjectsRoom(4, 7);
+        // Entrace will always be at 0, 0
+        SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
+
+        if (_worldSize == WorldSize.Small) SetSmallSpecialRooms(grid);
+        else if (_worldSize == WorldSize.Medium) SetMediumSpecialRooms(grid);
+        else if (_worldSize == WorldSize.Large) SetLargeSpecialRooms(grid);
     }
 
-    private void SetPitRoom(IRoom[,] grid)
+    private void SetSmallSpecialRooms(IRoom[,] grid)
     {
-        if (_worldSize == WorldSize.Small) grid[0, 1] = new PitRoom(0, 1);
-        else if (_worldSize == WorldSize.Medium) grid[1, 3] = new PitRoom(1, 3);
-        else if (_worldSize == WorldSize.Large) grid[4, 6] = new PitRoom(4, 6);
+        SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
+        SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 0, 2 } });
+        SetSpecialRoom<PitRoom>(grid, new int[1, 2] { { 0, 1 } });
     }
 
-    private void SetMaelstromRoom(IRoom[,] grid)
+    private void SetMediumSpecialRooms(IRoom[,] grid)
     {
-        if (_worldSize == WorldSize.Small) grid[2, 0] = new MaelstromRoom(2, 0);
-        else if (_worldSize == WorldSize.Medium) grid[1, 3] = new PitRoom(1, 1);
-        else if (_worldSize == WorldSize.Large) grid[4, 6] = new PitRoom(3, 4);
+        SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
+        SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 3, 4 } });
+        SetSpecialRoom<PitRoom>(grid, new int[2, 2] { { 1, 3 }, { 4, 5} });
+        SetSpecialRoom<MaelstromRoom>(grid, new int[1, 2] { { 3, 3 } });
+        SetSpecialRoom<AmarokRoom>(grid, new int[2, 2] { { 2, 3 }, { 4, 3 } });
+    }
+
+    private void SetLargeSpecialRooms(IRoom[,] grid)
+    {
+        SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
+        SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 4, 5 } });
+        SetSpecialRoom<PitRoom>(grid, new int[4, 2] { { 1, 3 }, { 2, 5 }, { 1, 2 }, { 2, 7 } });
+        SetSpecialRoom<MaelstromRoom>(grid, new int[2, 2] { { 5, 6 }, { 7, 7 } });
+        SetSpecialRoom<AmarokRoom>(grid, new int[3, 2] { { 3, 3 }, { 5, 5 }, { 6, 7 } });
+    }
+
+    // Sets a certain room at the coordinates given.
+    private void SetSpecialRoom<T>(IRoom[,] grid, int[,] coordinates)
+        where T : IRoom, new()
+    {
+        for (int i = 0; i < coordinates.GetLength(0); i++) {
+            IRoom room = new T();
+            room.Row = coordinates[i, 0];
+            room.Column = coordinates[i, 1];
+            grid[room.Row, room.Column] = room;
+        }
     }
 
     public IRoom GetFountainRoom()
     {
         if (_worldSize == WorldSize.Small) return Grid[0, 2];
-        if (_worldSize == WorldSize.Medium) return Grid[1, 4];
-        return Grid[4, 7];
+        if (_worldSize == WorldSize.Medium) return Grid[3, 4];
+        return Grid[4, 5];
     }
 
     public IRoom GetRoom(int x, int y) => Grid[x, y];
@@ -417,6 +442,8 @@ public class GenericRoom : IRoom
     public string? AdjacentMessage { get; set; }
     public ICommand? Command { get; init; }
 
+    public GenericRoom () { }
+
     public GenericRoom(int row, int column)
     {
         Row = row;
@@ -433,27 +460,41 @@ public class FountainOfObjectsRoom : GenericRoom
 {
     public bool Enabled { get; set; } = false;
 
-    public FountainOfObjectsRoom(int row, int column) : base(row, column) 
+    public FountainOfObjectsRoom() 
     {
         RoomSymbol = '^';
         Color = ConsoleColor.Blue;
         InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
+
+    //public FountainOfObjectsRoom(int row, int column) : base(row, column) 
+    //{
+    //    RoomSymbol = '^';
+    //    Color = ConsoleColor.Blue;
+    //    InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
+    //}
 }
 
 public class EntranceRoom : GenericRoom
 {
-    public EntranceRoom(int row, int column) : base(row, column)
+    public EntranceRoom() 
     {
         RoomSymbol = 'O';
         Color = ConsoleColor.Yellow;
         InRoomMessage = "You see light coming from the cavern entrance.";
     }
+
+    //public EntranceRoom(int row, int column) : base(row, column)
+    //{
+    //    RoomSymbol = 'O';
+    //    Color = ConsoleColor.Yellow;
+    //    InRoomMessage = "You see light coming from the cavern entrance.";
+    //}
 }
 
 public class PitRoom : GenericRoom
 {
-    public PitRoom(int row, int column) : base(row, column)
+    public PitRoom() 
     {
         Command = new PitCommand();
         RoomSymbol = '_';
@@ -461,11 +502,20 @@ public class PitRoom : GenericRoom
         InRoomMessage = "You fell into a pit and die.";
         AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
     }
+
+    //public PitRoom(int row, int column) : base(row, column)
+    //{
+    //    Command = new KillCommand<PitRoom>();
+    //    RoomSymbol = '_';
+    //    Color = ConsoleColor.Red;
+    //    InRoomMessage = "You fell into a pit and die.";
+    //    AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
+    //}
 }
 
 public class MaelstromRoom : GenericRoom
 {
-    public MaelstromRoom(int row, int column) : base(row, column)
+    public MaelstromRoom() 
     {
         Command = new MaelstromCommand();
         RoomSymbol = '@';
@@ -473,11 +523,20 @@ public class MaelstromRoom : GenericRoom
         InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
         AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
     }
+
+    //public MaelstromRoom(int row, int column) : base(row, column)
+    //{
+    //    Command = new MaelstromCommand();
+    //    RoomSymbol = '@';
+    //    Color = ConsoleColor.Red;
+    //    InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
+    //    AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
+    //}
 }
 
 public class AmarokRoom : GenericRoom
 {
-    public AmarokRoom(int row, int column) : base(row, column)
+    public AmarokRoom() 
     {
         Command = new MaelstromCommand();
         RoomSymbol = '!';
@@ -485,6 +544,15 @@ public class AmarokRoom : GenericRoom
         InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
         AdjacentMessage = "You can smell the rotten stench of an amarok in a nearby room.";
     }
+
+    //public AmarokRoom(int row, int column) : base(row, column)
+    //{
+    //    Command = new KillCommand<AmarokRoom>();
+    //    RoomSymbol = '!';
+    //    Color = ConsoleColor.Red;
+    //    InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
+    //    AdjacentMessage = "You can smell the rotten stench of an amarok in a nearby room.";
+    //}
 }
 
 public class Player
