@@ -88,7 +88,7 @@ public class FountainGame
     }
 
     private string PlayerLocationMessage() => 
-        $"You are in the room at (Row={_player.X}, Column={_player.Y}).";
+        $"You are in the room at (Row={_player.Row}, Column={_player.Column}).";
 
     private void SetMessages()
     {
@@ -96,7 +96,7 @@ public class FountainGame
         _messageManager.AddMessage(PlayerLocationMessage());
 
         // Current room message
-        IRoom currentRoom = _worldManager.GetRoom(_player.X, _player.Y);
+        IRoom currentRoom = _worldManager.GetRoom(_player.Row, _player.Column);
         if (currentRoom.InRoomMessage != null)
             _messageManager.AddMessage(currentRoom.InRoomMessage, currentRoom.Color);
 
@@ -149,7 +149,7 @@ public class FountainGame
         FountainOfObjectsRoom fountainRoom = 
             (FountainOfObjectsRoom)_worldManager.GetFountainRoom();
 
-        if (fountainRoom.Enabled && _player.X == 0 && _player.Y == 0)
+        if (fountainRoom.Enabled && _player.Row == 0 && _player.Column == 0)
             return true;
 
         return false;
@@ -261,6 +261,7 @@ public class WorldManager
 
         SetFountainRoom(grid);
         SetPitRoom(grid);
+        SetMaelstromRoom(grid);
 
         return grid;
     }
@@ -279,6 +280,13 @@ public class WorldManager
         else if (_worldSize == WorldSize.Large) grid[4, 6] = new PitRoom(4, 6);
     }
 
+    private void SetMaelstromRoom(IRoom[,] grid)
+    {
+        if (_worldSize == WorldSize.Small) grid[2, 0] = new MaelstromRoom(2, 0);
+        else if (_worldSize == WorldSize.Medium) grid[1, 3] = new PitRoom(1, 1);
+        else if (_worldSize == WorldSize.Large) grid[4, 6] = new PitRoom(3, 4);
+    }
+
     public IRoom GetFountainRoom()
     {
         if (_worldSize == WorldSize.Small) return Grid[0, 2];
@@ -293,17 +301,17 @@ public class WorldManager
     {
         List<IRoom> adjacentRooms = new List<IRoom>();
 
-        int x = player.X;
-        int y = player.Y;
+        int x = player.Row;
+        int y = player.Column;
 
-        if (IsValidRoom(x + 1, y)) adjacentRooms.Add(Grid[player.X + 1, player.Y]);
-        if (IsValidRoom(x - 1, y)) adjacentRooms.Add(Grid[player.X - 1, player.Y]);
-        if (IsValidRoom(x, y + 1)) adjacentRooms.Add(Grid[player.X, player.Y + 1]);
-        if (IsValidRoom(x, y - 1)) adjacentRooms.Add(Grid[player.X, player.Y - 1]);
-        if (IsValidRoom(x + 1, y + 1)) adjacentRooms.Add(Grid[player.X + 1, player.Y + 1]);
-        if (IsValidRoom(x + 1, y - 1)) adjacentRooms.Add(Grid[player.X + 1, player.Y - 1]);
-        if (IsValidRoom(x - 1, y - 1)) adjacentRooms.Add(Grid[player.X - 1, player.Y - 1]);
-        if (IsValidRoom(x - 1, y + 1)) adjacentRooms.Add(Grid[player.X - 1, player.Y + 1]);
+        if (IsValidRoom(x + 1, y)) adjacentRooms.Add(Grid[player.Row + 1, player.Column]);
+        if (IsValidRoom(x - 1, y)) adjacentRooms.Add(Grid[player.Row - 1, player.Column]);
+        if (IsValidRoom(x, y + 1)) adjacentRooms.Add(Grid[player.Row, player.Column + 1]);
+        if (IsValidRoom(x, y - 1)) adjacentRooms.Add(Grid[player.Row, player.Column - 1]);
+        if (IsValidRoom(x + 1, y + 1)) adjacentRooms.Add(Grid[player.Row + 1, player.Column + 1]);
+        if (IsValidRoom(x + 1, y - 1)) adjacentRooms.Add(Grid[player.Row + 1, player.Column - 1]);
+        if (IsValidRoom(x - 1, y - 1)) adjacentRooms.Add(Grid[player.Row - 1, player.Column - 1]);
+        if (IsValidRoom(x - 1, y + 1)) adjacentRooms.Add(Grid[player.Row - 1, player.Column + 1]);
 
         return adjacentRooms;
     }
@@ -370,8 +378,8 @@ public class WorldManager
             if (room.PlayerInRoom) room.PlayerInRoom = false;
         }
 
-        Grid[player.X, player.Y].PlayerInRoom = true;
-        _currentRoom = Grid[player.X, player.Y];
+        Grid[player.Row, player.Column].PlayerInRoom = true;
+        _currentRoom = Grid[player.Row, player.Column];
 
         if (!_currentRoom.Discovered) _currentRoom.Discovered = true;
     }
@@ -386,8 +394,8 @@ public enum WorldSize { Small, Medium, Large }
 
 public interface IRoom
 {
-    public int X { get; set; }
-    public int Y { get; set; }
+    public int Row { get; set; }
+    public int Column { get; set; }
     public bool PlayerInRoom { get; set; }
     public bool Discovered { get; set; }
     public char RoomSymbol { get; set; }
@@ -399,8 +407,8 @@ public interface IRoom
 
 public class GenericRoom : IRoom
 {
-    public int X { get; set; }
-    public int Y { get; set; }
+    public int Row { get; set; }
+    public int Column { get; set; }
     public bool PlayerInRoom { get; set; }
     public bool Discovered { get; set; }
     public char RoomSymbol { get; set; }
@@ -409,10 +417,10 @@ public class GenericRoom : IRoom
     public string? AdjacentMessage { get; set; }
     public ICommand? Command { get; init; }
 
-    public GenericRoom(int x, int y)
+    public GenericRoom(int row, int column)
     {
-        X = x;
-        Y = y;
+        Row = row;
+        Column = column;
         RoomSymbol = ' ';
         Color = ConsoleColor.White;
         InRoomMessage = null;
@@ -425,9 +433,9 @@ public class FountainOfObjectsRoom : GenericRoom
 {
     public bool Enabled { get; set; } = false;
 
-    public FountainOfObjectsRoom(int X, int Y) : base(X, Y) 
+    public FountainOfObjectsRoom(int row, int column) : base(row, column) 
     {
-        RoomSymbol = '@';
+        RoomSymbol = '^';
         Color = ConsoleColor.Blue;
         InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
@@ -435,7 +443,7 @@ public class FountainOfObjectsRoom : GenericRoom
 
 public class EntranceRoom : GenericRoom
 {
-    public EntranceRoom(int X, int Y) : base(X, Y)
+    public EntranceRoom(int row, int column) : base(row, column)
     {
         RoomSymbol = '*';
         Color = ConsoleColor.Yellow;
@@ -445,7 +453,7 @@ public class EntranceRoom : GenericRoom
 
 public class PitRoom : GenericRoom
 {
-    public PitRoom(int X, int Y) : base(X, Y)
+    public PitRoom(int row, int column) : base(row, column)
     {
         Command = new PitCommand();
         RoomSymbol = '_';
@@ -455,17 +463,29 @@ public class PitRoom : GenericRoom
     }
 }
 
+public class MaelstromRoom : GenericRoom
+{
+    public MaelstromRoom(int row, int column) : base(row, column)
+    {
+        Command = new MaelstromCommand();
+        RoomSymbol = '@';
+        Color = ConsoleColor.Red;
+        InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
+        AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
+    }
+}
+
 public class Player
 {
-    public int X { get; set; }
-    public int Y { get; set; }
+    public int Row { get; set; }
+    public int Column { get; set; }
     public char Symbol { get; private set; }
     public bool Alive { get; set; }
 
     public Player(char symbol)
     {
-        X = 0;
-        Y = 0;
+        Row = 0;
+        Column = 0;
         Symbol = symbol;
         Alive = true;
     }
@@ -474,6 +494,30 @@ public class Player
 public interface ICommand
 {
     public void Run(FountainGame game);
+}
+
+public class MaelstromCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
+
+        if (currentRoom.GetType() != typeof(MaelstromRoom))
+            return;
+
+        // Move player 1 space south, and two spaces west.
+        int worldSize = game.GetWorldSize();
+        if (player.Row >= worldSize) player.Row = 0;
+        else player.Row += 1;
+
+        if (player.Column == 0) player.Column = worldSize - 2;
+        else if (player.Column == 1) player.Column = worldSize - 1;
+        else player.Column -= 2;
+
+        game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
+        game.GetWorldManager().Update(player);
+    }
 }
 
 public class PitCommand : ICommand
@@ -535,7 +579,7 @@ public class NorthCommand : ICommand
     public void Run(FountainGame game)
     {
         Player player = game.GetPlayer();
-        if (player.X != 0) player.X--;
+        if (player.Row != 0) player.Row--;
     }
 }
 
@@ -545,7 +589,7 @@ public class EastCommand : ICommand
     {
         Player player = game.GetPlayer();
         int worldSize = game.GetWorldSize();
-        if (player.Y != worldSize - 1) player.Y++;
+        if (player.Column != worldSize - 1) player.Column++;
     }
 }
 
@@ -555,7 +599,7 @@ public class SouthCommand : ICommand
     {
         Player player = game.GetPlayer();
         int worldSize = game.GetWorldSize();
-        if (player.X != worldSize - 1) player.X++;
+        if (player.Row != worldSize - 1) player.Row++;
     }
 }
 
@@ -565,7 +609,7 @@ public class WestCommand : ICommand
     {
         Player player = game.GetPlayer();
         int worldSize = game.GetWorldSize();
-        if (player.Y != 0) player.Y--;
+        if (player.Column != 0) player.Column--;
     }
 }
 
