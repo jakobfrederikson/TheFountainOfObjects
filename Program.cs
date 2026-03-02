@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Data.Common;
+using System.Drawing;
 
 FountainGame.DisplayStartGameMessage();
 WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
@@ -308,9 +309,9 @@ public class WorldManager
 
     private void SetEnemies(IRoom[,] grid)
     {
-        if (_worldSize == WorldSize.Small) SetSmallSpecialRooms(grid);
-        else if (_worldSize == WorldSize.Medium) SetMediumSpecialRooms(grid);
-        else if (_worldSize == WorldSize.Large) SetLargeSpecialRooms(grid);
+        if (_worldSize == WorldSize.Small) SetSmallEnemies(grid);
+        else if (_worldSize == WorldSize.Medium) SetMediumEnemies(grid);
+        else if (_worldSize == WorldSize.Large) SetLargeEnemies(grid);
     }
 
     private void SetSmallEnemies(IRoom[,] grid)
@@ -340,7 +341,8 @@ public class WorldManager
             IEnemy enemy = new T();
             enemy.Row = coordinates[i, 0];
             enemy.Column = coordinates[i, 1];
-            grid[enemy.Row, enemy.Column].Enemies.Add(enemy);
+
+            grid[enemy.Row, enemy.Column].Enemy = enemy;
         }
     }
 
@@ -460,6 +462,7 @@ public interface IRoom
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
     public ICommand? Command { get; init; }
+    public IEnemy? Enemy { get; set; }
 }
 
 public class GenericRoom : IRoom
@@ -473,8 +476,19 @@ public class GenericRoom : IRoom
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
     public ICommand? Command { get; init; }
+    public IEnemy? Enemy { get; set; }
 
-    public GenericRoom () { }
+    public GenericRoom () 
+    {
+        Row = 0;
+        Column = 0;
+        RoomSymbol = ' ';
+        Color = ConsoleColor.White;
+        InRoomMessage = null;
+        AdjacentMessage = null;
+        Command = null;
+        Enemy = null;
+    }
 
     public GenericRoom(int row, int column)
     {
@@ -485,6 +499,7 @@ public class GenericRoom : IRoom
         InRoomMessage = null;
         AdjacentMessage = null;
         Command = null;
+        Enemy = null;
     }
 }
 
@@ -608,11 +623,16 @@ public class MaelstromCommand : ICommand
     public void Run(FountainGame game)
     {
         Player player = game.GetPlayer();
-        IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
+        WorldManager worldManager = game.GetWorldManager();
+        IRoom currentRoom = worldManager.GetCurrentRoom();
 
-        if (currentRoom.GetType() != typeof(MaelstromRoom))
+        if (currentRoom.Enemy == null)
             return;
 
+        IEnemy maelstrom = currentRoom.Enemy;
+
+        if (maelstrom.GetType() != typeof(MaelstromEnemy))
+            return;
         
         int worldSize = game.GetWorldSize();
 
@@ -626,15 +646,21 @@ public class MaelstromCommand : ICommand
 
 
         // Move maelstrom 1 space south, and two spaces west.
-        if (currentRoom.Row >= worldSize) currentRoom.Row = 0;
-        else currentRoom.Row += 1;
+        if (maelstrom.Row >= worldSize) maelstrom.Row = 0;
+        else maelstrom.Row += 1;
 
-        if (currentRoom.Column == 0) currentRoom.Column = worldSize - 2;
-        else if (currentRoom.Column == 1) currentRoom.Column = worldSize - 1;
-        else currentRoom.Column -= 2;
+        if (maelstrom.Column == 0) maelstrom.Column = worldSize - 2;
+        else if (maelstrom.Column == 1) maelstrom.Column = worldSize - 1;
+        else maelstrom.Column -= 2;
 
-        game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
-        game.GetWorldManager().Update(player);
+        // Maelstrom has moved coords, so clear the enemy in current room.
+        worldManager.GetCurrentRoom().Enemy = null;
+
+        // Now, set maelstrom in new coords.
+        worldManager.GetRoom(maelstrom.Row, maelstrom.Column).Enemy = maelstrom;
+
+        game.GetMessageManager().AddMessage(maelstrom.InRoomMessage, maelstrom.Colour);
+        worldManager.Update(player);
     }
 }
 
@@ -645,13 +671,17 @@ public class KillCommand<T> : ICommand
     {
         Player player = game.GetPlayer();
         IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
-        IEnemy enemy = null;
+
+        if (currentRoom.Enemy == null) return;
+
+        IEnemy enemy = currentRoom.Enemy;
+
         // If current room has enemy
-        if (currentRoom.GetType() != typeof(T))
+        if (enemy.GetType() != typeof(T))
             return;
 
         player.Alive = false;
-        game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
+        game.GetMessageManager().AddMessage(enemy.InRoomMessage, enemy.Colour);
     }
 }
 
