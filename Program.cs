@@ -635,21 +635,17 @@ public class MaelstromCommand : ICommand
         int worldSize = game.GetWorldSize();
 
         // Move player 1 place north, and two spaces east.
-        if (player.Row == 0) player.Row = worldSize - 1;
-        else player.Row -= 1;
+        player.Row -= 1;
+        player.Column += 2;
 
-        if (player.Column == worldSize - 1) player.Column = 1;
-        else if (player.Column == worldSize - 2) player.Column = 0;
-        else player.Column -= 2;
-
+        if (player.Row < 0) player.Row = worldSize + player.Row;
+        if (player.Column > worldSize - 1) player.Column = 0 + (player.Column - worldSize);
 
         // Move maelstrom 1 space south, and two spaces west.
-        if (maelstrom.Row >= worldSize) maelstrom.Row = 0;
-        else maelstrom.Row += 1;
-
-        if (maelstrom.Column == 0) maelstrom.Column = worldSize - 2;
-        else if (maelstrom.Column == 1) maelstrom.Column = worldSize - 1;
-        else maelstrom.Column -= 2;
+        maelstrom.Row += 1;
+        maelstrom.Column -= 2;
+        if (maelstrom.Row > worldSize - 1) maelstrom.Row = 0 + (maelstrom.Row - worldSize);
+        if (maelstrom.Column < 0) maelstrom.Column = worldSize + maelstrom.Column;
 
         // Maelstrom has moved coords, so clear the enemy in current room.
         worldManager.GetCurrentRoom().Enemy = null;
