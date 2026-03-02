@@ -1,7 +1,4 @@
-﻿using System.Data.Common;
-using System.Drawing;
-
-FountainGame.DisplayStartGameMessage();
+﻿FountainGame.DisplayStartGameMessage();
 WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
 Player player = new Player('P');
 FountainGame game = new FountainGame(grid, player);
@@ -34,9 +31,13 @@ public class FountainGame
             // Clear old messsages
             _messageManager.ClearMessages();
 
-            // Run command for current room
-            _commandManager.SetCommand(_worldManager.GetCurrentRoom().Command);
-            _commandManager.RunCommand(this);
+            // Run command for current room, if there is an enemy
+            IRoom currentRoom = _worldManager.GetCurrentRoom();
+            if (currentRoom.Enemy != null)
+            {
+                _commandManager.SetCommand(currentRoom.Enemy.Command);
+                _commandManager.RunCommand(this);
+            }            
 
             // Check Win/Lose
             if (CheckWin())
@@ -103,10 +104,13 @@ public class FountainGame
         if (currentRoom.InRoomMessage != null)
             _messageManager.AddMessage(currentRoom.InRoomMessage, currentRoom.Color);
 
-        // Any adjacent room messages
+        // Any adjacent room messages and room enemy messages
         List<IRoom> adjacentRooms = _worldManager.GetAdjacentRooms(_player);
         foreach (IRoom room in adjacentRooms)
+        {
             if (room.AdjacentMessage != null) _messageManager.AddMessage(room.AdjacentMessage);
+            if (room.Enemy != null) _messageManager.AddMessage(room.Enemy.AdjacentMessage);
+        }
     }
 
     private ICommand GetCommand()
@@ -461,7 +465,6 @@ public interface IRoom
     public ConsoleColor Color { get; set; }
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
-    public ICommand? Command { get; init; }
     public IEnemy? Enemy { get; set; }
 }
 
@@ -475,7 +478,6 @@ public class GenericRoom : IRoom
     public ConsoleColor Color { get; set; }
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
-    public ICommand? Command { get; init; }
     public IEnemy? Enemy { get; set; }
 
     public GenericRoom () 
@@ -486,7 +488,6 @@ public class GenericRoom : IRoom
         Color = ConsoleColor.White;
         InRoomMessage = null;
         AdjacentMessage = null;
-        Command = null;
         Enemy = null;
     }
 
@@ -498,7 +499,6 @@ public class GenericRoom : IRoom
         Color = ConsoleColor.White;
         InRoomMessage = null;
         AdjacentMessage = null;
-        Command = null;
         Enemy = null;
     }
 }
