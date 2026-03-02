@@ -1,4 +1,6 @@
-﻿FountainGame.DisplayStartGameMessage();
+﻿using System.Drawing;
+
+FountainGame.DisplayStartGameMessage();
 WorldManager grid = new WorldManager(WorldManager.SetWorldSize());
 Player player = new Player('P');
 FountainGame game = new FountainGame(grid, player);
@@ -462,13 +464,6 @@ public class FountainOfObjectsRoom : GenericRoom
         Color = ConsoleColor.Blue;
         InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
-
-    //public FountainOfObjectsRoom(int row, int column) : base(row, column) 
-    //{
-    //    RoomSymbol = '^';
-    //    Color = ConsoleColor.Blue;
-    //    InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
-    //}
 }
 
 public class EntranceRoom : GenericRoom
@@ -479,76 +474,78 @@ public class EntranceRoom : GenericRoom
         Color = ConsoleColor.Yellow;
         InRoomMessage = "You see light coming from the cavern entrance.";
     }
-
-    //public EntranceRoom(int row, int column) : base(row, column)
-    //{
-    //    RoomSymbol = 'O';
-    //    Color = ConsoleColor.Yellow;
-    //    InRoomMessage = "You see light coming from the cavern entrance.";
-    //}
 }
 
-public class PitRoom : GenericRoom
+public interface IEnemy
 {
-    public PitRoom() 
+    public int Row { get; set; }
+    public int Column { get; set; }
+    public char Symbol { get; set; }
+    public bool Alive { get; set; }
+    public ICommand? Command { get; set; }
+    public ConsoleColor Colour { get; set; }
+    public string? InRoomMessage { get; set; }
+    public string? AdjacentMessage { get; set; }
+}
+
+public class BaseEnemy : IEnemy
+{
+    public int Row { get; set; }
+    public int Column { get; set; }
+    public char Symbol { get; set; }
+    public bool Alive { get; set; }
+    public ICommand? Command { get; set; }
+    public ConsoleColor Colour { get; set; }
+    public string? InRoomMessage { get; set; }
+    public string? AdjacentMessage { get; set; }
+
+    public BaseEnemy()
     {
-        Command = new KillCommand<PitRoom>();
-        RoomSymbol = '_';
-        Color = ConsoleColor.Red;
+        Row = 0;
+        Column = 0;
+        Symbol = ' ';
+        Alive = true;
+        Command = null;
+        Colour = ConsoleColor.Gray;
+        InRoomMessage = null;
+        AdjacentMessage = null;
+    }
+}
+
+public class PitEnemy : BaseEnemy
+{
+    public PitEnemy()
+    {
+        Symbol = '_';
+        Command = new KillCommand<PitEnemy>();
+        Colour = ConsoleColor.Red;
         InRoomMessage = "You fell into a pit and die.";
         AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
     }
-
-    //public PitRoom(int row, int column) : base(row, column)
-    //{
-    //    Command = new KillCommand<PitRoom>();
-    //    RoomSymbol = '_';
-    //    Color = ConsoleColor.Red;
-    //    InRoomMessage = "You fell into a pit and die.";
-    //    AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
-    //}
 }
 
-public class MaelstromRoom : GenericRoom
+public class MaelstromEnemy : BaseEnemy
 {
-    public MaelstromRoom() 
+    public MaelstromEnemy()
     {
-        Command = new MaelstromCommand();
-        RoomSymbol = '@';
-        Color = ConsoleColor.Red;
+        Symbol = '@';
+        Command = new MaelstromCommand();        
+        Colour = ConsoleColor.Red;
         InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
         AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
     }
-
-    //public MaelstromRoom(int row, int column) : base(row, column)
-    //{
-    //    Command = new MaelstromCommand();
-    //    RoomSymbol = '@';
-    //    Color = ConsoleColor.Red;
-    //    InRoomMessage = "You walked into a maelstrom, and have been swept elsewhere.";
-    //    AdjacentMessage = "You hear the growling and groaning of a maelstrom nearby.";
-    //}
 }
 
-public class AmarokRoom : GenericRoom
+public class AmarokEnemy : BaseEnemy
 {
-    public AmarokRoom() 
+    public AmarokEnemy()
     {
-        Command = new KillCommand<AmarokRoom>();
-        RoomSymbol = '!';
-        Color = ConsoleColor.Red;
+        Command = new KillCommand<AmarokEnemy>();
+        Symbol = '!';
+        Colour = ConsoleColor.Red;
         InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
         AdjacentMessage = "You can smell the rotten stench of an amarok in a nearby room.";
     }
-
-    //public AmarokRoom(int row, int column) : base(row, column)
-    //{
-    //    Command = new KillCommand<AmarokRoom>();
-    //    RoomSymbol = '!';
-    //    Color = ConsoleColor.Red;
-    //    InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
-    //    AdjacentMessage = "You can smell the rotten stench of an amarok in a nearby room.";
-    //}
 }
 
 public class Player
@@ -582,14 +579,25 @@ public class MaelstromCommand : ICommand
         if (currentRoom.GetType() != typeof(MaelstromRoom))
             return;
 
-        // Move player 1 space south, and two spaces west.
+        
         int worldSize = game.GetWorldSize();
-        if (player.Row >= worldSize) player.Row = 0;
-        else player.Row += 1;
 
-        if (player.Column == 0) player.Column = worldSize - 2;
-        else if (player.Column == 1) player.Column = worldSize - 1;
+        // Move player 1 place north, and two spaces east.
+        if (player.Row == 0) player.Row = worldSize - 1;
+        else player.Row -= 1;
+
+        if (player.Column == worldSize - 1) player.Column = 1;
+        else if (player.Column == worldSize - 2) player.Column = 0;
         else player.Column -= 2;
+
+
+        // Move maelstrom 1 space south, and two spaces west.
+        if (currentRoom.Row >= worldSize) currentRoom.Row = 0;
+        else currentRoom.Row += 1;
+
+        if (currentRoom.Column == 0) currentRoom.Column = worldSize - 2;
+        else if (currentRoom.Column == 1) currentRoom.Column = worldSize - 1;
+        else currentRoom.Column -= 2;
 
         game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
         game.GetWorldManager().Update(player);
@@ -597,16 +605,17 @@ public class MaelstromCommand : ICommand
 }
 
 public class KillCommand<T> : ICommand
-    where T : IRoom
+    where T : IEnemy
 {
     public void Run(FountainGame game)
     {
         Player player = game.GetPlayer();
         IRoom currentRoom = game.GetWorldManager().GetCurrentRoom();
-
+        IEnemy enemy = null;
+        // If current room has enemy
         if (currentRoom.GetType() != typeof(T))
             return;
-        
+
         player.Alive = false;
         game.GetMessageManager().AddMessage(currentRoom.InRoomMessage, ConsoleColor.Red);
     }
