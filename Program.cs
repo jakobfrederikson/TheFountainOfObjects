@@ -259,6 +259,7 @@ public class WorldManager
         }
 
         SetSpecialRooms(grid);
+        SetEnemies(grid);
 
         return grid;
     }
@@ -277,36 +278,69 @@ public class WorldManager
     {
         SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
         SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 0, 2 } });
-        SetSpecialRoom<PitRoom>(grid, new int[1, 2] { { 0, 1 } });
+        
     }
 
     private void SetMediumSpecialRooms(IRoom[,] grid)
     {
         SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
         SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 3, 4 } });
-        SetSpecialRoom<PitRoom>(grid, new int[2, 2] { { 1, 3 }, { 4, 5} });
-        SetSpecialRoom<MaelstromRoom>(grid, new int[1, 2] { { 3, 3 } });
-        SetSpecialRoom<AmarokRoom>(grid, new int[2, 2] { { 2, 3 }, { 4, 3 } });
     }
 
     private void SetLargeSpecialRooms(IRoom[,] grid)
     {
         SetSpecialRoom<EntranceRoom>(grid, new int[1, 2] { { 0, 0 } });
-        SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 4, 5 } });
-        SetSpecialRoom<PitRoom>(grid, new int[4, 2] { { 1, 3 }, { 2, 5 }, { 1, 2 }, { 2, 7 } });
-        SetSpecialRoom<MaelstromRoom>(grid, new int[2, 2] { { 5, 6 }, { 7, 7 } });
-        SetSpecialRoom<AmarokRoom>(grid, new int[3, 2] { { 3, 3 }, { 5, 5 }, { 6, 7 } });
+        SetSpecialRoom<FountainOfObjectsRoom>(grid, new int[1, 2] { { 4, 5 } });        
     }
 
     // Sets a certain room at the coordinates given.
     private void SetSpecialRoom<T>(IRoom[,] grid, int[,] coordinates)
         where T : IRoom, new()
     {
-        for (int i = 0; i < coordinates.GetLength(0); i++) {
+        for (int i = 0; i < coordinates.GetLength(0); i++)
+        {
             IRoom room = new T();
             room.Row = coordinates[i, 0];
             room.Column = coordinates[i, 1];
             grid[room.Row, room.Column] = room;
+        }
+    }
+
+    private void SetEnemies(IRoom[,] grid)
+    {
+        if (_worldSize == WorldSize.Small) SetSmallSpecialRooms(grid);
+        else if (_worldSize == WorldSize.Medium) SetMediumSpecialRooms(grid);
+        else if (_worldSize == WorldSize.Large) SetLargeSpecialRooms(grid);
+    }
+
+    private void SetSmallEnemies(IRoom[,] grid)
+    {
+        SetEnemy<PitEnemy>(grid, new int[1, 2] { { 0, 1 } });
+    }
+
+    private void SetMediumEnemies(IRoom[,] grid)
+    {
+        SetEnemy<PitEnemy>(grid, new int[2, 2] { { 1, 3 }, { 4, 5 } });
+        SetEnemy<MaelstromEnemy>(grid, new int[1, 2] { { 3, 3 } });
+        SetEnemy<AmarokEnemy>(grid, new int[2, 2] { { 2, 3 }, { 4, 3 } });
+    }
+
+    private void SetLargeEnemies(IRoom[,] grid)
+    {
+        SetEnemy<PitEnemy>(grid, new int[4, 2] { { 1, 3 }, { 2, 5 }, { 1, 2 }, { 2, 7 } });
+        SetEnemy<MaelstromEnemy>(grid, new int[2, 2] { { 5, 6 }, { 7, 7 } });
+        SetEnemy<AmarokEnemy>(grid, new int[3, 2] { { 3, 3 }, { 5, 5 }, { 6, 7 } });
+    }
+
+    private void SetEnemy<T>(IRoom[,] grid, int[,] coordinates)
+        where T : IEnemy, new()
+    {
+        for (int i = 0; i < coordinates.GetLength(0); i++)
+        {
+            IEnemy enemy = new T();
+            enemy.Row = coordinates[i, 0];
+            enemy.Column = coordinates[i, 1];
+            grid[enemy.Row, enemy.Column].Enemies.Add(enemy);
         }
     }
 
