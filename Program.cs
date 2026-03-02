@@ -121,17 +121,15 @@ public class FountainGame
         {
             string? commandChoice = AskPlayerWhatToDo();
 
-            
-            command = commandChoice?.ToLower() switch
-            {
-                "move north" => new NorthCommand(),
-                "move east" => new EastCommand(),
-                "move south" => new SouthCommand(),
-                "move west" => new WestCommand(),
-                "enable fountain" => new EnableFountainCommand(),
-                "help" => new HelpCommand(),
-                _ => new DefaultCommand()
-            };
+            if (commandChoice == null) command = new DefaultCommand();
+            else commandChoice = commandChoice.ToLower();
+
+            if (commandChoice == "move north" || commandChoice == "mn") command = new NorthCommand();
+            else if (commandChoice == "move east" || commandChoice == "me") command = new EastCommand();
+            else if (commandChoice == "move south" || commandChoice == "ms") command = new SouthCommand();
+            else if (commandChoice == "move west" || commandChoice == "mw") command = new WestCommand();
+            else if (commandChoice == "enable fountain" || commandChoice == "ef") command = new EnableFountainCommand();
+            else if (commandChoice == "help") command = new HelpCommand();
 
             if (command == null || command.GetType() == typeof(DefaultCommand))
                 ColourConsole.WriteLineWithColour("That wasn't a valid command.", ConsoleColor.Red);
@@ -689,10 +687,13 @@ public class HelpCommand : ICommand
 {
     public void Run(FountainGame game)
     {
-        ColourConsole.WriteWithColour("move (north, east, south, west): ", ConsoleColor.Cyan);
+        ColourConsole.WriteWithColour("help: ", ConsoleColor.Cyan);
+        Console.WriteLine("Displays the help menu.");
+
+        ColourConsole.WriteWithColour("move (north, east, south, west) or m(n, e, s, w): ", ConsoleColor.Cyan);
         Console.WriteLine("Move the player along the grid.");
 
-        ColourConsole.WriteWithColour("enable fountain: ", ConsoleColor.Cyan);
+        ColourConsole.WriteWithColour("enable fountain or ef: ", ConsoleColor.Cyan);
         Console.WriteLine("Enables the Fountain of Objects.");
 
         Console.WriteLine();
