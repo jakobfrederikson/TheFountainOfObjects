@@ -106,7 +106,7 @@ public class FountainGame
         // Current room message
         IRoom currentRoom = _worldManager.GetRoom(_player.Row, _player.Column);
         if (currentRoom.InRoomMessage != null)
-            _messageManager.AddMessage(currentRoom.InRoomMessage, currentRoom.Color);
+            _messageManager.AddMessage(currentRoom.InRoomMessage, currentRoom.Colour);
 
         // Any adjacent room messages and room enemy messages
         List<IRoom> adjacentRooms = _worldManager.GetAdjacentRooms(_player);
@@ -432,10 +432,7 @@ public class WorldManager
                 Console.Write(" ");
 
                 // Display the state of the cell.
-                if (Grid[i, j].PlayerInRoom)
-                    ColourConsole.WriteWithColour($"{playerSymbol}", ConsoleColor.Magenta);
-                else
-                    ColourConsole.WriteWithColour($"{cellText}", Grid[i, j].Color);
+                ColourConsole.WriteWithColour($"{cellText}", cellColour);
 
                 Console.Write(" ");
 
@@ -487,11 +484,13 @@ public interface IRoom
     public int Column { get; set; }
     public bool PlayerInRoom { get; set; }
     public bool Discovered { get; set; }
-    public char RoomSymbol { get; set; }
-    public ConsoleColor Color { get; set; }
+    public char Symbol { get; set; }
+    public ConsoleColor Colour { get; set; }
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
     public IEnemy? Enemy { get; set; }
+
+    public bool HasEnemy();
 }
 
 public class GenericRoom : IRoom
@@ -500,8 +499,8 @@ public class GenericRoom : IRoom
     public int Column { get; set; }
     public bool PlayerInRoom { get; set; }
     public bool Discovered { get; set; }
-    public char RoomSymbol { get; set; }
-    public ConsoleColor Color { get; set; }
+    public char Symbol { get; set; }
+    public ConsoleColor Colour { get; set; }
     public string? InRoomMessage { get; set; }
     public string? AdjacentMessage { get; set; }
     public IEnemy? Enemy { get; set; }
@@ -510,8 +509,8 @@ public class GenericRoom : IRoom
     {
         Row = 0;
         Column = 0;
-        RoomSymbol = ' ';
-        Color = ConsoleColor.White;
+        Symbol = ' ';
+        Colour = ConsoleColor.White;
         InRoomMessage = null;
         AdjacentMessage = null;
         Enemy = null;
@@ -521,12 +520,14 @@ public class GenericRoom : IRoom
     {
         Row = row;
         Column = column;
-        RoomSymbol = ' ';
-        Color = ConsoleColor.White;
+        Symbol = ' ';
+        Colour = ConsoleColor.White;
         InRoomMessage = null;
         AdjacentMessage = null;
         Enemy = null;
     }
+
+    public bool HasEnemy() => Enemy != null ? true : false;
 }
 
 public class FountainOfObjectsRoom : GenericRoom
@@ -535,8 +536,8 @@ public class FountainOfObjectsRoom : GenericRoom
 
     public FountainOfObjectsRoom() 
     {
-        RoomSymbol = '^';
-        Color = ConsoleColor.Blue;
+        Symbol = '^';
+        Colour = ConsoleColor.Blue;
         InRoomMessage = "You hear water dripping in this room. The Fountain of Objects is here!";
     }
 }
@@ -545,8 +546,8 @@ public class EntranceRoom : GenericRoom
 {
     public EntranceRoom() 
     {
-        RoomSymbol = 'O';
-        Color = ConsoleColor.Yellow;
+        Symbol = 'O';
+        Colour = ConsoleColor.Yellow;
         InRoomMessage = "You see light coming from the cavern entrance.";
     }
 }
