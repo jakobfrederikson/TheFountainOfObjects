@@ -405,9 +405,29 @@ public class WorldManager
             {
                 Console.Write("|");
                 // Get the current string to print onto the board.
-                char cellText = Grid[i, j].Discovered == true
-                                    ? Grid[i, j].RoomSymbol
-                                    : ' ';
+                char cellText = ' ';
+                ConsoleColor cellColour = ConsoleColor.Gray;
+
+                IRoom currentRoom = Grid[i, j];
+
+                if (currentRoom.PlayerInRoom)
+                {
+                    cellText = playerSymbol;
+                    cellColour = ConsoleColor.Magenta;
+
+                }
+                else if (currentRoom.Enemy != null && currentRoom.Enemy.Alive == false)
+                {
+                    cellText = currentRoom.Enemy.Symbol;
+                    
+                    // Don't use enemyColour here, the enemy is dead.
+                    //cellColour = currentRoom.Enemy.Colour;
+                }
+                else if (currentRoom.Discovered)
+                {
+                    cellText = currentRoom.Symbol;
+                    cellColour = currentRoom.Colour;
+                }
 
                 Console.Write(" ");
 
