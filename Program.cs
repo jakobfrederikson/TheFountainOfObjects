@@ -33,7 +33,7 @@ public class FountainGame
 
             // Run command for current room, if there is an enemy
             IRoom currentRoom = _worldManager.GetCurrentRoom();
-            if (currentRoom.Enemy != null)
+            if (currentRoom.Enemy != null && currentRoom.Enemy.Alive == true)
             {
                 _commandManager.SetCommand(currentRoom.Enemy.Command);
                 _commandManager.RunCommand(this);
@@ -109,7 +109,7 @@ public class FountainGame
         foreach (IRoom room in adjacentRooms)
         {
             if (room.AdjacentMessage != null) _messageManager.AddMessage(room.AdjacentMessage);
-            if (room.Enemy != null) _messageManager.AddMessage(room.Enemy.AdjacentMessage);
+            if (room.Enemy != null && room.Enemy.Alive == true) _messageManager.AddMessage(room.Enemy.AdjacentMessage);
         }
     }
 
@@ -128,6 +128,10 @@ public class FountainGame
             else if (commandChoice == "move east" || commandChoice == "me") command = new EastCommand();
             else if (commandChoice == "move south" || commandChoice == "ms") command = new SouthCommand();
             else if (commandChoice == "move west" || commandChoice == "mw") command = new WestCommand();
+            else if (commandChoice == "shoot north" || commandChoice == "sn") command = new ShootNorthCommand();
+            else if (commandChoice == "shoot east" || commandChoice == "se") command = new ShootEastCommand();
+            else if (commandChoice == "shoot south" || commandChoice == "ss") command = new ShootSouthCommand();
+            else if (commandChoice == "shoot west" || commandChoice == "sw") command = new ShootWestCommand();
             else if (commandChoice == "enable fountain" || commandChoice == "ef") command = new EnableFountainCommand();
             else if (commandChoice == "help") command = new HelpCommand();
 
@@ -355,7 +359,7 @@ public class WorldManager
         return Grid[4, 5];
     }
 
-    public IRoom GetRoom(int x, int y) => Grid[x, y];
+    public IRoom GetRoom(int Row, int Column) => Grid[Row, Column];
     public IRoom GetCurrentRoom() => _currentRoom;
 
     public List<IRoom> GetAdjacentRooms(Player player)
@@ -564,7 +568,7 @@ public class PitEnemy : BaseEnemy
     public PitEnemy()
     {
         Symbol = '_';
-        Command = new KillCommand<PitEnemy>();
+        Command = new KillPlayerCommand<PitEnemy>();
         Colour = ConsoleColor.Red;
         InRoomMessage = "You fell into a pit and die.";
         AdjacentMessage = "You feel a draft. There is a pit in a nearby room.";
@@ -587,7 +591,7 @@ public class AmarokEnemy : BaseEnemy
 {
     public AmarokEnemy()
     {
-        Command = new KillCommand<AmarokEnemy>();
+        Command = new KillPlayerCommand<AmarokEnemy>();
         Symbol = '!';
         Colour = ConsoleColor.Red;
         InRoomMessage = "You walked into a group of giant, rotting Amarok wolves and died.";
@@ -601,6 +605,7 @@ public class Player
     public int Column { get; set; }
     public char Symbol { get; private set; }
     public bool Alive { get; set; }
+    public int Arrows { get; private set; }
 
     public Player(char symbol)
     {
@@ -608,12 +613,28 @@ public class Player
         Column = 0;
         Symbol = symbol;
         Alive = true;
+        Arrows = 5;
+    }
+
+    public bool Shoot()
+    {
+        if (Arrows > 0)
+        {
+            Arrows--;
+            return true;
+        }
+        return false;
     }
 }
 
 public interface ICommand
 {
     public void Run(FountainGame game);
+}
+
+public class DefaultCommand : ICommand
+{
+    public void Run(FountainGame game) { }
 }
 
 public class MaelstromCommand : ICommand
@@ -658,7 +679,7 @@ public class MaelstromCommand : ICommand
     }
 }
 
-public class KillCommand<T> : ICommand
+public class KillPlayerCommand<T> : ICommand
     where T : IEnemy
 {
     public void Run(FountainGame game)
@@ -689,6 +710,9 @@ public class HelpCommand : ICommand
         ColourConsole.WriteWithColour("move (north, east, south, west) or m(n, e, s, w): ", ConsoleColor.Cyan);
         Console.WriteLine("Move the player along the grid.");
 
+        ColourConsole.WriteWithColour("shoot (north, east, south, west) or s(n, e, s, w): ", ConsoleColor.Cyan);
+        Console.WriteLine("Shoot into a room.");
+
         ColourConsole.WriteWithColour("enable fountain or ef: ", ConsoleColor.Cyan);
         Console.WriteLine("Enables the Fountain of Objects.");
 
@@ -716,9 +740,128 @@ public class EnableFountainCommand : ICommand
     }
 }
 
-public class DefaultCommand : ICommand
+public class ShootNorthCommand : ICommand
 {
-    public void Run(FountainGame game) { }
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        MessageManager messageManager = game.GetMessageManager();
+
+        if (!player.Shoot())
+        {
+            messageManager.AddMessage("You can no longer shoot.");
+            return;
+        }
+
+        if (player.Row - 1 < 0)
+        {
+            messageManager.AddMessage("You shot an arrow into a wall and hit nothing.");
+            return;
+        }
+        
+        IRoom northRoom = game.GetWorldManager().GetRoom(player.Row - 1, player.Column);
+        if (northRoom.Enemy == null || northRoom.Enemy.Alive == false)
+        {
+            messageManager.AddMessage("You shot into a room, but nothing happened.");
+            return;
+        }
+
+        northRoom.Enemy.Alive = false;
+        messageManager.AddMessage("You shot into a room and killed an enemy.", ConsoleColor.Green);
+    }
+}
+
+public class ShootEastCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        MessageManager messageManager = game.GetMessageManager();
+
+        if (!player.Shoot())
+        {
+            messageManager.AddMessage("You can no longer shoot.");
+            return;
+        }
+
+        if (player.Column + 1 > game.GetWorldSize() - 1)
+        {
+            messageManager.AddMessage("You shot an arrow into a wall and hit nothing.");
+            return;
+        }
+
+        IRoom eastRoom = game.GetWorldManager().GetRoom(player.Row, player.Column + 1);
+        if (eastRoom.Enemy == null || eastRoom.Enemy.Alive == false)
+        {
+            messageManager.AddMessage("You shot into a room, and there was nothing there.");
+            return;
+        }
+
+        eastRoom.Enemy.Alive = false;
+        messageManager.AddMessage("You shot into a room and killed an enemy.", ConsoleColor.Green);
+    }
+}
+
+public class ShootSouthCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        MessageManager messageManager = game.GetMessageManager();
+
+        if (!player.Shoot())
+        {
+            messageManager.AddMessage("You can no longer shoot.");
+            return;
+        }
+
+        if (player.Row + 1 > game.GetWorldSize() - 1)
+        {
+            messageManager.AddMessage("You shot an arrow into a wall and hit nothing.");
+            return;
+        }
+
+        IRoom southRoom = game.GetWorldManager().GetRoom(player.Row + 1, player.Column);
+        if (southRoom.Enemy == null || southRoom.Enemy.Alive == false)
+        {
+            messageManager.AddMessage("You shot into a room, and there was nothing there.");
+            return;
+        }
+
+        southRoom.Enemy.Alive = false;
+        messageManager.AddMessage("You shot into a room and killed an enemy.", ConsoleColor.Green);
+    }
+}
+
+public class ShootWestCommand : ICommand
+{
+    public void Run(FountainGame game)
+    {
+        Player player = game.GetPlayer();
+        MessageManager messageManager = game.GetMessageManager();
+
+        if (!player.Shoot())
+        {
+            messageManager.AddMessage("You can no longer shoot.");
+            return;
+        }
+
+        if (player.Column - 1 < 0)
+        {
+            messageManager.AddMessage("You shot an arrow into a wall and hit nothing.");
+            return;
+        }
+
+        IRoom westRoom = game.GetWorldManager().GetRoom(player.Row, player.Column - 1);
+        if (westRoom.Enemy == null || westRoom.Enemy.Alive == false)
+        {
+            messageManager.AddMessage("You shot into a room, and there was nothing there.");
+            return;
+        }
+
+        westRoom.Enemy.Alive = false;
+        messageManager.AddMessage("You shot into a room and killed an enemy.", ConsoleColor.Green);
+    }
 }
 
 public class NorthCommand : ICommand
