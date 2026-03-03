@@ -94,10 +94,14 @@ public class FountainGame
     private string PlayerLocationMessage() => 
         $"You are in the room at (Row={_player.Row}, Column={_player.Column}).";
 
+    private string PlayerArrowsMessage() =>
+        $"You have {_player.Arrows}/5 arrows.";
+
     private void SetMessages()
     {
-        // Player location
+        // Player location and arrows
         _messageManager.AddMessage(PlayerLocationMessage());
+        _messageManager.AddMessage(PlayerArrowsMessage());
 
         // Current room message
         IRoom currentRoom = _worldManager.GetRoom(_player.Row, _player.Column);
